@@ -179,22 +179,28 @@ def esp(draw_list):
                                    bone_pos_screen['pelvis'][0], bone_pos_screen['pelvis'][1],
                                    color, 1.5)
 
-            # HP bar near left arm
-            if hp_bar_rendering == 1:
+            # Estimate scale based on head-to-pelvis screen distance
+            scale = 1.0
+            if -999 not in bone_pos_screen['head'] and -999 not in bone_pos_screen['pelvis']:
+                head_y = bone_pos_screen['head'][1]
+                pelvis_y = bone_pos_screen['pelvis'][1]
+                scale = max(0.5, min(1.8, abs(pelvis_y - head_y) / 150.0))  # clamp to prevent too small/large
+
+            # HP bar near left arm (scaled)
+            if hp_bar_rendering == 1 and -999 not in bone_pos_screen['l_shoulder']:
                 entity_hp = pm.read_int(entity_pawn_addr + m_iHealth)
                 hp_percentage = min(1.0, max(0.0, entity_hp / 100.0))
-                if -999 not in bone_pos_screen['l_shoulder']:
-                    x, y = bone_pos_screen['l_shoulder']
-                    bar_width = 4
-                    bar_height = 40
-                    top = y - bar_height / 2
-                    draw_list.add_rect_filled(x - 10, top, x - 10 + bar_width, top + bar_height, imgui.get_color_u32_rgba(0, 0, 0, 0.5))
-                    draw_list.add_rect_filled(x - 10, top + bar_height * (1 - hp_percentage), x - 10 + bar_width, top + bar_height, color)
+                x, y = bone_pos_screen['l_shoulder']
+                bar_width = 3
+                bar_height = 60 * scale  # increase height for better visibility
+                top = y - bar_height / 2
+                draw_list.add_rect_filled(x - 10, top, x - 10 + bar_width, top + bar_height, imgui.get_color_u32_rgba(0, 0, 0, 0.5))
+                draw_list.add_rect_filled(x - 10, top + bar_height * (1 - hp_percentage), x - 10 + bar_width, top + bar_height, color)
 
-            # Head hitbox circle
+            # Head hitbox circle (scaled)
             if head_hitbox_rendering == 1 and -999 not in bone_pos_screen['head']:
                 x, y = bone_pos_screen['head']
-                draw_list.add_circle_filled(x, y, 6.5, color)
+                draw_list.add_circle_filled(x, y, 8 * scale, color)  # Was 6.5 before
 
         except:
             continue
